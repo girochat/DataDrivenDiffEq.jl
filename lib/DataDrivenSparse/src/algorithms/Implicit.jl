@@ -63,8 +63,8 @@ function (x::ImplicitOptimizer)(X, Y;
         results[i] = solver(X[inds, :], X[i, :])
     end
 
-    # Find best results with dof >= 2
-    best_id = 0
+    best_id = 0   ### => Added else condition to avoid case best_id=0 (it uses aicc results to define best result)
+    best_aicc = Inf
     foreach(enumerate(results)) do (i, res)
         inds .= true
         inds[i] = false
@@ -74,8 +74,15 @@ function (x::ImplicitOptimizer)(X, Y;
             elseif aicc(first(res)) < aicc(first(results[best_id]))
                 best_id = i
             end
+        else
+            new_aicc = aicc(first(res))
+            if new_aicc < best_aicc
+                best_aicc = new_aicc
+                best_id = i
+            end
         end
     end
+  
     # Build the coefficient matrix
     inds .= true
     inds[best_id] = false
